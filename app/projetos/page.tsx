@@ -70,6 +70,9 @@ export default async function ProjetosPage({
               </select>
             </form>
           )}
+          <Link className="btn-secondary btn" href={`/projetos/membros?workspace=${workspaceId}`}>
+            Membros
+          </Link>
           <Link className="btn" href={`/projetos/novo?workspace=${workspaceId}`}>
             + Novo Projeto
           </Link>

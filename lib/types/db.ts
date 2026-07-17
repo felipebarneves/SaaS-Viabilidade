@@ -22,6 +22,8 @@ export interface WorkspaceMemberRow {
   workspace_id: string;
   user_id: string;
   role: WorkspaceRole;
+  email: string | null;
+  created_at: string;
 }
 
 export interface SystemParameterRow {

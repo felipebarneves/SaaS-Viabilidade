@@ -26,6 +26,7 @@ export async function criarWorkspace(formData: FormData) {
     workspace_id: workspaceId,
     user_id: userData.user.id,
     role: "OWNER_ADMIN",
+    email: userData.user.email,
   });
   if (memberError) throw memberError;
 
