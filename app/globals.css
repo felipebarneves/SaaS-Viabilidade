@@ -1,0 +1,136 @@
+/* RNF-CORE-002: interface executiva sóbria, modo claro/escuro persistente por preferência do usuário.
+   Paleta placeholder — substituir por MY_BUSINESS/brand/brand-identity.md quando existir (Seção 4 do PRD). */
+
+:root {
+  --bg: #f7f8fa;
+  --surface: #ffffff;
+  --border: #dde1e6;
+  --text: #16191d;
+  --text-muted: #5b6370;
+  --accent: #1f4b8f;
+  --accent-contrast: #ffffff;
+  --positive: #1a7f4b;
+  --negative: #b3261e;
+}
+
+:root[data-theme="dark"] {
+  --bg: #101317;
+  --surface: #171b21;
+  --border: #2a2f37;
+  --text: #edf0f3;
+  --text-muted: #9aa3af;
+  --accent: #6f9ceb;
+  --accent-contrast: #0a0f16;
+  --positive: #4fd18b;
+  --negative: #f2867d;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101317;
+    --surface: #171b21;
+    --border: #2a2f37;
+    --text: #edf0f3;
+    --text-muted: #9aa3af;
+    --accent: #6f9ceb;
+    --accent-contrast: #0a0f16;
+    --positive: #4fd18b;
+    --negative: #f2867d;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 14px;
+}
+
+a {
+  color: var(--accent);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th,
+td {
+  border-bottom: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+th:first-child,
+td:first-child {
+  text-align: left;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.btn {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+input,
+select {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+}
+
+label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.field {
+  margin-bottom: 0.75rem;
+}
+
+.negative {
+  color: var(--negative);
+}
+
+.positive {
+  color: var(--positive);
+}
+
+.muted {
+  color: var(--text-muted);
+}

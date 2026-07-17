@@ -172,6 +172,45 @@ describe("simular() — Lucro Presumido", () => {
   });
 });
 
+describe("simular() — Lucro Real", () => {
+  it("usa Base_Calculo = Lucro_Antes_IR puro (sem adições/exclusões, fora do escopo do MVP)", () => {
+    const projeto = baseProjeto({
+      duracaoMeses: 1,
+      tributacao: { regime: "LUCRO_REAL", parametrosFiscais },
+      itensCronograma: [
+        {
+          id: "receita-1",
+          tipo: "RECEITA",
+          dataInicio: "2026-01-01",
+          duracaoMeses: 1,
+          quantidade: 1,
+          valorUnitario: 100000,
+          aliquotaImpostos: 0,
+        },
+        {
+          id: "custo-1",
+          tipo: "CUSTO",
+          classificacaoCusto: "VARIAVEL",
+          dataInicio: "2026-01-01",
+          duracaoMeses: 1,
+          quantidade: 1,
+          valorUnitario: 40000,
+          aliquotaImpostos: 0,
+        },
+      ],
+    });
+
+    const resultado = simular(projeto);
+    // Lucro_Antes_IR = 100000 - 40000 = 60000 (sem dep/amort/despesas financeiras)
+    const base = 60000;
+    const irpj = base * 0.15 + Math.max(0, base - 20000) * 0.1; // 9000 + 4000 = 13000
+    const csll = base * 0.09; // 5400
+    expect(resultado.linhasMensais[0]!.lucroAntesIR).toBeCloseTo(60000, 6);
+    expect(resultado.linhasMensais[0]!.irCsll).toBeCloseTo(irpj + csll, 6);
+    expect(resultado.linhasMensais[0]!.lucroLiquido).toBeCloseTo(60000 - (irpj + csll), 6);
+  });
+});
+
 describe("simular() — Breakeven Operacional", () => {
   it("Margem_Contribuicao = (Receita - Custos_Variaveis)/Receita; Breakeven = Custos_Fixos/Margem", () => {
     const projeto = baseProjeto({
