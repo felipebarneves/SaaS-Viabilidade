@@ -8,6 +8,7 @@ import type {
   DepreciationAmortizationEntryRow,
   FinancialExpenseEntryRow,
   ProjectRow,
+  ScheduleItemOverrideRow,
   ScheduleItemRow,
   WorkingCapitalEntryRow,
 } from "@/lib/types/db";
@@ -16,6 +17,7 @@ import type { ParametrosFiscais } from "@/core/engine";
 export interface ProjetoComRelacionamentos {
   project: ProjectRow;
   scheduleItems: ScheduleItemRow[];
+  scheduleItemOverrides: ScheduleItemOverrideRow[];
   capexItems: CapexItemRow[];
   workingCapitalEntries: WorkingCapitalEntryRow[];
   adjustmentCompetencies: ContractAdjustmentCompetencyRow[];
@@ -30,6 +32,13 @@ export function montarProjetoInput(
 ): ProjetoInput {
   const { project } = dados;
 
+  const overridesPorItem = new Map<string, { mesCompetencia: string; valorUnitario: number }[]>();
+  for (const o of dados.scheduleItemOverrides) {
+    const lista = overridesPorItem.get(o.schedule_item_id) ?? [];
+    lista.push({ mesCompetencia: o.mes_competencia.slice(0, 7), valorUnitario: o.valor_unitario_override });
+    overridesPorItem.set(o.schedule_item_id, lista);
+  }
+
   return {
     id: project.id,
     duracaoMeses: project.duracao_meses,
@@ -42,6 +51,7 @@ export function montarProjetoInput(
       quantidade: item.quantidade,
       valorUnitario: item.valor_unitario,
       aliquotaImpostos: item.aliquota_impostos,
+      overridesMensais: overridesPorItem.get(item.id),
     })),
     capex: dados.capexItems.map((c) => ({
       id: c.id,

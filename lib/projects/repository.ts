@@ -6,6 +6,7 @@ import type {
   DepreciationAmortizationEntryRow,
   FinancialExpenseEntryRow,
   ProjectRow,
+  ScheduleItemOverrideRow,
   ScheduleItemRow,
   WorkingCapitalEntryRow,
 } from "@/lib/types/db";
@@ -40,9 +41,17 @@ export async function carregarProjetoComRelacionamentos(
 
   if (!project.data) return null;
 
+  const scheduleItemIds = (scheduleItems.data ?? []).map((item) => (item as ScheduleItemRow).id);
+  const scheduleItemOverrides =
+    scheduleItemIds.length === 0
+      ? { data: [] as ScheduleItemOverrideRow[], error: null }
+      : await supabase.from("schedule_item_overrides").select("*").in("schedule_item_id", scheduleItemIds);
+  if (scheduleItemOverrides.error) throw scheduleItemOverrides.error;
+
   return {
     project: project.data as ProjectRow,
     scheduleItems: (scheduleItems.data ?? []) as ScheduleItemRow[],
+    scheduleItemOverrides: (scheduleItemOverrides.data ?? []) as ScheduleItemOverrideRow[],
     capexItems: (capexItems.data ?? []) as CapexItemRow[],
     workingCapitalEntries: (workingCapitalEntries.data ?? []) as WorkingCapitalEntryRow[],
     adjustmentCompetencies: (adjustmentCompetencies.data ?? []) as ContractAdjustmentCompetencyRow[],

@@ -14,6 +14,12 @@ export type PeriodicidadeReajuste = "ANUAL" | "ANIVERSARIO_CONTRATO";
 
 export type TipoItem = "RECEITA" | "CUSTO" | "DESPESA_OPERACIONAL";
 
+/** RF-CORE-002: sobrescrita manual do Valor Unitário vigente numa competência específica do item. */
+export interface OverrideMensalItem {
+  mesCompetencia: string; // "YYYY-MM"
+  valorUnitario: number;
+}
+
 /** Item de cronograma físico-financeiro (Regra 1). Custos/Despesas usam a mesma forma de rateio. */
 export interface ItemCronograma {
   id: string;
@@ -25,6 +31,8 @@ export interface ItemCronograma {
   quantidade: number;
   valorUnitario: number;
   aliquotaImpostos: number; // fração 0-1, aplicada somente a itens de RECEITA
+  /** RF-CORE-002: overrides por competência — vencem sobre o valor calculado (rateio/reajuste). */
+  overridesMensais?: OverrideMensalItem[];
 }
 
 /** Parcela/tranche de Capex — cronograma próprio, independente do rateio por Duração (Regra 1). */

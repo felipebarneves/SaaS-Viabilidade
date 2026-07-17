@@ -100,6 +100,15 @@ export interface FinancialExpenseEntryRow {
   valor: number;
 }
 
+export interface ScheduleItemOverrideRow {
+  id: string;
+  schedule_item_id: string;
+  mes_competencia: string;
+  valor_unitario_override: number;
+  created_by: string;
+  created_at: string;
+}
+
 export interface ProjectVersionRow {
   id: string;
   project_id: string;

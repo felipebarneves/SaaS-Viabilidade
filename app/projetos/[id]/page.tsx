@@ -9,7 +9,16 @@ import {
   resolverTaxaDescontoPadraoGlobal,
 } from "@/lib/params/resolve";
 import { simular } from "@/core/engine";
-import { adicionarCapex, adicionarCapitalGiro, adicionarCompetenciaReajuste, adicionarItemCronograma } from "@/app/actions/projects";
+import {
+  adicionarCapex,
+  adicionarCapitalGiro,
+  adicionarCompetenciaReajuste,
+  adicionarDepreciacaoAmortizacao,
+  adicionarDespesaFinanceira,
+  adicionarItemCronograma,
+  restaurarItemCronograma,
+  sobrescreverItemMensal,
+} from "@/app/actions/projects";
 import { salvarVersao } from "@/app/actions/versions";
 
 function formatarMoeda(valor: number): string {
@@ -78,6 +87,7 @@ export default async function ProjetoDetalhePage({ params }: { params: Promise<{
                 <th>Qtd.</th>
                 <th>Valor Unit.</th>
                 <th>Impostos</th>
+                <th>Editado</th>
               </tr>
             </thead>
             <tbody>
@@ -90,11 +100,12 @@ export default async function ProjetoDetalhePage({ params }: { params: Promise<{
                   <td>{item.quantidade}</td>
                   <td>{formatarMoeda(item.valor_unitario)}</td>
                   <td>{formatarPercentual(item.aliquota_impostos)}</td>
+                  <td>{item.editado_manualmente ? "Sim" : "—"}</td>
                 </tr>
               ))}
               {dados.scheduleItems.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="muted">
+                  <td colSpan={8} className="muted">
                     Nenhum item lançado.
                   </td>
                 </tr>
@@ -148,6 +159,82 @@ export default async function ProjetoDetalhePage({ params }: { params: Promise<{
         </form>
       </div>
 
+      {dados.scheduleItems.length > 0 && (
+        <div className="card">
+          <h2 style={{ fontSize: 15, marginTop: 0 }}>Sobrescrita Manual por Competência (RF-CORE-002)</h2>
+          <p className="muted" style={{ marginTop: 0 }}>
+            Sobrescreve o Valor Unitário calculado automaticamente (rateio/reajuste) para um item num mês específico.
+            Restaurar remove todos os overrides do item e volta ao cálculo automático.
+          </p>
+
+          {dados.scheduleItemOverrides.length > 0 && (
+            <ul>
+              {dados.scheduleItemOverrides.map((o) => {
+                const item = dados.scheduleItems.find((i) => i.id === o.schedule_item_id);
+                return (
+                  <li key={o.id}>
+                    {item?.tipo ?? "item"} ({o.schedule_item_id.slice(0, 8)}) — {o.mes_competencia.slice(0, 7)}: valor unitário sobrescrito para{" "}
+                    {formatarMoeda(o.valor_unitario_override)}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          <form action={sobrescreverItemMensal} style={{ display: "flex", gap: "0.5rem", alignItems: "end", marginBottom: "0.75rem" }}>
+            <input type="hidden" name="project_id" value={id} />
+            <input type="hidden" name="workspace_id" value={workspaceId} />
+            <div className="field">
+              <label htmlFor="override_item">Item</label>
+              <select id="override_item" name="schedule_item_id" required defaultValue="">
+                <option value="" disabled>
+                  Selecione…
+                </option>
+                {dados.scheduleItems.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.tipo} — início {item.data_inicio} — {formatarMoeda(item.valor_unitario)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="override_mes">Competência (YYYY-MM)</label>
+              <input id="override_mes" name="mes_competencia" type="month" required />
+            </div>
+            <div className="field">
+              <label htmlFor="override_valor">Valor Unitário Sobrescrito</label>
+              <input id="override_valor" name="valor_unitario_override" type="number" step="any" required />
+            </div>
+            <button className="btn" type="submit">
+              Sobrescrever
+            </button>
+          </form>
+
+          <form action={restaurarItemCronograma} style={{ display: "flex", gap: "0.5rem", alignItems: "end" }}>
+            <input type="hidden" name="project_id" value={id} />
+            <input type="hidden" name="workspace_id" value={workspaceId} />
+            <div className="field">
+              <label htmlFor="restore_item">Restaurar item ao cálculo automático</label>
+              <select id="restore_item" name="schedule_item_id" required defaultValue="">
+                <option value="" disabled>
+                  Selecione…
+                </option>
+                {dados.scheduleItems
+                  .filter((item) => item.editado_manualmente)
+                  .map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.tipo} — início {item.data_inicio}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <button className="btn-secondary btn" type="submit">
+              Restaurar
+            </button>
+          </form>
+        </div>
+      )}
+
       <div className="card">
         <h2 style={{ fontSize: 15, marginTop: 0 }}>Capex</h2>
         <ul>
@@ -199,6 +286,67 @@ export default async function ProjetoDetalhePage({ params }: { params: Promise<{
           </button>
         </form>
       </div>
+
+      <div className="card">
+        <h2 style={{ fontSize: 15, marginTop: 0 }}>Depreciação/Amortização</h2>
+        <ul>
+          {dados.depreciationEntries.map((d) => (
+            <li key={d.id}>
+              {d.mes_competencia.slice(0, 7)} — Depreciação {formatarMoeda(d.depreciacao)} · Amortização {formatarMoeda(d.amortizacao)}
+            </li>
+          ))}
+        </ul>
+        <form action={adicionarDepreciacaoAmortizacao} style={{ display: "flex", gap: "0.5rem", alignItems: "end" }}>
+          <input type="hidden" name="project_id" value={id} />
+          <input type="hidden" name="workspace_id" value={workspaceId} />
+          <div className="field">
+            <label htmlFor="da_mes">Mês (YYYY-MM)</label>
+            <input id="da_mes" name="mes_competencia" type="month" required />
+          </div>
+          <div className="field">
+            <label htmlFor="da_dep">Depreciação</label>
+            <input id="da_dep" name="depreciacao" type="number" step="any" defaultValue={0} />
+          </div>
+          <div className="field">
+            <label htmlFor="da_amort">Amortização</label>
+            <input id="da_amort" name="amortizacao" type="number" step="any" defaultValue={0} />
+          </div>
+          <button className="btn" type="submit">
+            + Lançar
+          </button>
+        </form>
+      </div>
+
+      {dados.project.considerar_custo_financeiro && (
+        <div className="card">
+          <h2 style={{ fontSize: 15, marginTop: 0 }}>Despesas Financeiras</h2>
+          <p className="muted" style={{ marginTop: 0 }}>
+            Só entram no Lucro Antes do IR porque "Considerar Custo Financeiro" está ligado neste projeto (Regra 3).
+          </p>
+          <ul>
+            {dados.financialExpenseEntries.map((d) => (
+              <li key={d.id}>
+                {d.mes_competencia.slice(0, 7)} — {formatarMoeda(d.valor)}
+              </li>
+            ))}
+          </ul>
+          <form action={adicionarDespesaFinanceira} style={{ display: "flex", gap: "0.5rem", alignItems: "end" }}>
+            <input type="hidden" name="project_id" value={id} />
+            <input type="hidden" name="workspace_id" value={workspaceId} />
+            <div className="field">
+              <label htmlFor="df_mes">Mês (YYYY-MM)</label>
+              <input id="df_mes" name="mes_competencia" type="month" required />
+            </div>
+            <div className="field">
+              <label htmlFor="df_valor">Valor</label>
+              <input id="df_valor" name="valor" type="number" step="any" required />
+            </div>
+            <button className="btn" type="submit">
+              + Lançar
+            </button>
+          </form>
+        </div>
+      )}
 
       {dados.project.aplica_reajuste_contratual && (
         <div className="card">

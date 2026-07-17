@@ -136,3 +136,91 @@ export async function adicionarCompetenciaReajuste(formData: FormData) {
 
   revalidatePath(`/projetos/${projectId}`);
 }
+
+export async function adicionarDepreciacaoAmortizacao(formData: FormData) {
+  const projectId = String(formData.get("project_id"));
+  const workspaceId = String(formData.get("workspace_id"));
+  const supabase = await exigirPermissaoDeEscrita(workspaceId);
+
+  const { error } = await supabase.from("depreciation_amortization_entries").upsert(
+    {
+      project_id: projectId,
+      mes_competencia: `${formData.get("mes_competencia")}-01`,
+      depreciacao: Number(formData.get("depreciacao") || 0),
+      amortizacao: Number(formData.get("amortizacao") || 0),
+    },
+    { onConflict: "project_id,mes_competencia" },
+  );
+  if (error) throw error;
+
+  revalidatePath(`/projetos/${projectId}`);
+}
+
+export async function adicionarDespesaFinanceira(formData: FormData) {
+  const projectId = String(formData.get("project_id"));
+  const workspaceId = String(formData.get("workspace_id"));
+  const supabase = await exigirPermissaoDeEscrita(workspaceId);
+
+  const { error } = await supabase.from("financial_expense_entries").upsert(
+    {
+      project_id: projectId,
+      mes_competencia: `${formData.get("mes_competencia")}-01`,
+      valor: Number(formData.get("valor")),
+    },
+    { onConflict: "project_id,mes_competencia" },
+  );
+  if (error) throw error;
+
+  revalidatePath(`/projetos/${projectId}`);
+}
+
+/** RF-CORE-002: sobrescreve manualmente o Valor Unitário de um item numa competência específica. */
+export async function sobrescreverItemMensal(formData: FormData) {
+  const projectId = String(formData.get("project_id"));
+  const workspaceId = String(formData.get("workspace_id"));
+  const scheduleItemId = String(formData.get("schedule_item_id"));
+  const supabase = await exigirPermissaoDeEscrita(workspaceId);
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) throw new Error("Não autenticado.");
+
+  const { error: overrideError } = await supabase.from("schedule_item_overrides").upsert(
+    {
+      schedule_item_id: scheduleItemId,
+      mes_competencia: `${formData.get("mes_competencia")}-01`,
+      valor_unitario_override: Number(formData.get("valor_unitario_override")),
+      created_by: userData.user.id,
+    },
+    { onConflict: "schedule_item_id,mes_competencia" },
+  );
+  if (overrideError) throw overrideError;
+
+  const { error: flagError } = await supabase
+    .from("schedule_items")
+    .update({ editado_manualmente: true })
+    .eq("id", scheduleItemId);
+  if (flagError) throw flagError;
+
+  revalidatePath(`/projetos/${projectId}`);
+}
+
+/** RF-CORE-002: restaura o item ao cálculo automático — remove os overrides mensais e a flag. */
+export async function restaurarItemCronograma(formData: FormData) {
+  const projectId = String(formData.get("project_id"));
+  const workspaceId = String(formData.get("workspace_id"));
+  const scheduleItemId = String(formData.get("schedule_item_id"));
+  const supabase = await exigirPermissaoDeEscrita(workspaceId);
+
+  const { error: deleteError } = await supabase
+    .from("schedule_item_overrides")
+    .delete()
+    .eq("schedule_item_id", scheduleItemId);
+  if (deleteError) throw deleteError;
+
+  const { error: flagError } = await supabase
+    .from("schedule_items")
+    .update({ editado_manualmente: false })
+    .eq("id", scheduleItemId);
+  if (flagError) throw flagError;
+
+  revalidatePath(`/projetos/${projectId}`);
+}

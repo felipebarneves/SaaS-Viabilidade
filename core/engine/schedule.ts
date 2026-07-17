@@ -13,11 +13,13 @@ export interface LancamentoMensalItem {
   aliquotaImpostos: number;
   receitaLiquida: number; // 0 para itens que não são RECEITA
   valorBruto: number; // quantidade × valorUnitario, sem imposto — usado para custos/despesas
+  editadoManualmente: boolean; // RF-CORE-002 — true quando um override venceu o valor calculado
 }
 
 /**
  * Distribui um item de cronograma (receita/custo/despesa) mês a mês entre
  * Data de Início e Duração, aplicando reajuste contratual apenas a itens de RECEITA.
+ * RF-CORE-002: overrides manuais por competência vencem sobre o valor calculado.
  */
 export function distribuirItemCronograma(
   item: ItemCronograma,
@@ -38,8 +40,13 @@ export function distribuirItemCronograma(
         )
       : Array.from({ length: item.duracaoMeses }, () => item.valorUnitario);
 
+  const overridesPorCompetencia = new Map(
+    (item.overridesMensais ?? []).map((o) => [o.mesCompetencia, o.valorUnitario]),
+  );
+
   return mesesCompetencia.map((mesCompetencia, t) => {
-    const valorUnitario = valoresUnitarios[t]!;
+    const override = overridesPorCompetencia.get(mesCompetencia);
+    const valorUnitario = override ?? valoresUnitarios[t]!;
     const valorBruto = item.quantidade * valorUnitario;
     const receitaLiquida =
       item.tipo === "RECEITA" ? valorBruto * (1 - item.aliquotaImpostos) : 0;
@@ -51,6 +58,7 @@ export function distribuirItemCronograma(
       aliquotaImpostos: item.aliquotaImpostos,
       receitaLiquida,
       valorBruto,
+      editadoManualmente: override !== undefined,
     };
   });
 }
