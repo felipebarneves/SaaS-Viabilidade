@@ -20,14 +20,8 @@ import {
   sobrescreverItemMensal,
 } from "@/app/actions/projects";
 import { salvarVersao } from "@/app/actions/versions";
-
-function formatarMoeda(valor: number): string {
-  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
-function formatarPercentual(valor: number): string {
-  return `${(valor * 100).toFixed(1)}%`;
-}
+import { DashboardMensal } from "@/app/projetos/[id]/dashboard-mensal";
+import { formatarMoeda, formatarPercentual } from "@/lib/format";
 
 export default async function ProjetoDetalhePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -408,36 +402,7 @@ export default async function ProjetoDetalhePage({ params }: { params: Promise<{
             />
           </div>
 
-          <div className="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Mês</th>
-                  <th>Receita Líquida</th>
-                  <th>EBITDA</th>
-                  <th>EBIT</th>
-                  <th>IR/CSLL</th>
-                  <th>Lucro Líquido</th>
-                  <th>FCL</th>
-                  <th>Caixa Acumulado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {resultado.linhasMensais.map((l) => (
-                  <tr key={l.mesCompetencia}>
-                    <td>{l.mesCompetencia}</td>
-                    <td>{formatarMoeda(l.receitaLiquida)}</td>
-                    <td>{formatarMoeda(l.ebitda)}</td>
-                    <td>{formatarMoeda(l.ebit)}</td>
-                    <td>{formatarMoeda(l.irCsll)}</td>
-                    <td>{formatarMoeda(l.lucroLiquido)}</td>
-                    <td className={l.fcl < 0 ? "negative" : "positive"}>{formatarMoeda(l.fcl)}</td>
-                    <td className={l.caixaAcumulado < 0 ? "negative" : "positive"}>{formatarMoeda(l.caixaAcumulado)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DashboardMensal linhasMensais={resultado.linhasMensais} />
         </div>
       )}
     </div>

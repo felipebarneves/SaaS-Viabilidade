@@ -1,10 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import type { ProjectVersionRow } from "@/lib/types/db";
 import type { ProjectVersionSnapshot } from "@/lib/projects/snapshot";
-
-function formatarMoeda(valor: number): string {
-  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
+import { formatarMoeda } from "@/lib/format";
 
 // RF-CORE-004: comparativo lado a lado dos indicadores de resultado da Regra 2 entre versões salvas.
 export default async function VersoesPage({ params }: { params: Promise<{ id: string }> }) {
