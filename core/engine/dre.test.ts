@@ -65,3 +65,25 @@ describe("IR/CSLL por Regime Tributário (2.4-B)", () => {
     expect(calcularLucroLiquido(35000, 9900)).toBeCloseTo(25100, 6);
   });
 });
+
+describe("RF-CORE-001 (Validação Estrita) — bloqueio quando campo condicional obrigatório não foi preenchido", () => {
+  it("Simplificado (Alíquota Única) sem Alíquota Efetiva IR+CSLL lança erro claro", () => {
+    const tributacao: ConfiguracaoTributaria = {
+      regime: "SIMPLIFICADO_ALIQUOTA_UNICA",
+      parametrosFiscais,
+    };
+    expect(() => calcularIRCSLL(35000, 100000, tributacao)).toThrow(
+      "Regime Simplificado (Alíquota Única) exige Alíquota Efetiva IR+CSLL configurada.",
+    );
+  });
+
+  it("Lucro Presumido sem Percentual de Presunção lança erro claro", () => {
+    const tributacao: ConfiguracaoTributaria = {
+      regime: "LUCRO_PRESUMIDO",
+      parametrosFiscais,
+    };
+    expect(() => calcularIRCSLL(35000, 100000, tributacao)).toThrow(
+      "Regime Lucro Presumido exige Percentual de Presunção configurado.",
+    );
+  });
+});
