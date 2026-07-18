@@ -28,6 +28,13 @@ export async function criarProjeto(formData: FormData) {
   const percentualPresuncaoRaw = formData.get("percentual_presuncao");
   const aliquotaEfetivaRaw = formData.get("aliquota_efetiva_ir_csll");
 
+  if (regime === "LUCRO_PRESUMIDO" && !percentualPresuncaoRaw) {
+    throw new Error("Regime Lucro Presumido exige o Percentual de Presunção preenchido.");
+  }
+  if (regime === "SIMPLIFICADO_ALIQUOTA_UNICA" && !aliquotaEfetivaRaw) {
+    throw new Error("Regime Simplificado (Alíquota Única) exige a Alíquota Efetiva IR+CSLL preenchida.");
+  }
+
   const { data: projeto, error } = await supabase
     .from("projects")
     .insert({

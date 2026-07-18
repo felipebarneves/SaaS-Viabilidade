@@ -8,6 +8,7 @@ import { montarProjetoInput } from "@/lib/projects/mapper";
 import { carregarParametros, resolverParametrosFiscais, resolverTaxaDescontoPadraoGlobal } from "@/lib/params/resolve";
 import { simular } from "@/core/engine";
 import type { ProjectVersionSnapshot } from "@/lib/projects/snapshot";
+import { validarProjetoParaSimulacao } from "@/lib/projects/validacao";
 
 export async function salvarVersao(formData: FormData) {
   const projectId = String(formData.get("project_id"));
@@ -27,10 +28,9 @@ export async function salvarVersao(formData: FormData) {
 
   const parametros = await carregarParametros(supabase, workspaceId);
   const parametrosFiscais = resolverParametrosFiscais(parametros);
-  if (!parametrosFiscais) {
-    throw new Error(
-      "Parâmetros fiscais (alíquotas IRPJ/CSLL, limite mensal adicional) não configurados — cálculo suspenso (RF-CORE-005).",
-    );
+  const validacao = validarProjetoParaSimulacao(dados.project, parametrosFiscais);
+  if (!validacao.podeSimular || !parametrosFiscais) {
+    throw new Error(validacao.avisos.join(" "));
   }
 
   const input = montarProjetoInput(dados, resolverTaxaDescontoPadraoGlobal(parametros), parametrosFiscais);

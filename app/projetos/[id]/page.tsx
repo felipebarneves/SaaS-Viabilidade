@@ -22,6 +22,7 @@ import {
 import { salvarVersao } from "@/app/actions/versions";
 import { DashboardMensal } from "@/app/projetos/[id]/dashboard-mensal";
 import { formatarMoeda, formatarPercentual } from "@/lib/format";
+import { validarProjetoParaSimulacao } from "@/lib/projects/validacao";
 
 export default async function ProjetoDetalhePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -35,16 +36,13 @@ export default async function ProjetoDetalhePage({ params }: { params: Promise<{
   const parametrosFiscais = resolverParametrosFiscais(parametros);
   const taxaPadraoGlobal = resolverTaxaDescontoPadraoGlobal(parametros);
 
-  const avisos: string[] = [];
-  if (!parametrosFiscais) {
-    avisos.push(
-      "Parâmetros fiscais (alíquotas IRPJ/CSLL, limite mensal adicional) não configurados no Workspace nem no Sistema — cálculo de IR/CSLL suspenso.",
-    );
-  }
+  const validacao = validarProjetoParaSimulacao(dados.project, parametrosFiscais);
+  const avisos: string[] = [...validacao.avisos];
 
-  const resultado = parametrosFiscais
-    ? simular(montarProjetoInput(dados, taxaPadraoGlobal, parametrosFiscais))
-    : null;
+  const resultado =
+    validacao.podeSimular && parametrosFiscais
+      ? simular(montarProjetoInput(dados, taxaPadraoGlobal, parametrosFiscais))
+      : null;
 
   if (resultado?.vpl.status === "SUSPENSO" && resultado.vpl.motivoSuspensao) {
     avisos.push(resultado.vpl.motivoSuspensao);

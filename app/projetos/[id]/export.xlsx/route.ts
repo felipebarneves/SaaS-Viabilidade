@@ -6,6 +6,7 @@ import { montarProjetoInput } from "@/lib/projects/mapper";
 import { carregarParametros, resolverParametrosFiscais, resolverTaxaDescontoPadraoGlobal } from "@/lib/params/resolve";
 import { simular } from "@/core/engine";
 import { obterRoleNoWorkspace } from "@/lib/auth/rbac";
+import { validarProjetoParaSimulacao } from "@/lib/projects/validacao";
 
 const MOEDA = '"R$" #,##0.00';
 const PERCENTUAL = "0.0%";
@@ -28,11 +29,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const parametros = await carregarParametros(supabase, workspaceId);
   const parametrosFiscais = resolverParametrosFiscais(parametros);
   const taxaPadraoGlobal = resolverTaxaDescontoPadraoGlobal(parametros);
-  if (!parametrosFiscais) {
-    return NextResponse.json(
-      { error: "Parâmetros fiscais não configurados — cálculo suspenso, exportação indisponível." },
-      { status: 422 },
-    );
+  const validacao = validarProjetoParaSimulacao(dados.project, parametrosFiscais);
+  if (!validacao.podeSimular || !parametrosFiscais) {
+    return NextResponse.json({ error: validacao.avisos.join(" ") }, { status: 422 });
   }
 
   const resultado = simular(montarProjetoInput(dados, taxaPadraoGlobal, parametrosFiscais));

@@ -7,6 +7,7 @@ import { carregarParametros, resolverParametrosFiscais, resolverTaxaDescontoPadr
 import { simular } from "@/core/engine";
 import { obterRoleNoWorkspace } from "@/lib/auth/rbac";
 import { RelatorioPdf } from "@/lib/export/relatorio-pdf";
+import { validarProjetoParaSimulacao } from "@/lib/projects/validacao";
 
 export const runtime = "nodejs";
 
@@ -27,11 +28,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const parametros = await carregarParametros(supabase, workspaceId);
   const parametrosFiscais = resolverParametrosFiscais(parametros);
   const taxaPadraoGlobal = resolverTaxaDescontoPadraoGlobal(parametros);
-  if (!parametrosFiscais) {
-    return NextResponse.json(
-      { error: "Parâmetros fiscais não configurados — cálculo suspenso, exportação indisponível." },
-      { status: 422 },
-    );
+  const validacao = validarProjetoParaSimulacao(dados.project, parametrosFiscais);
+  if (!validacao.podeSimular || !parametrosFiscais) {
+    return NextResponse.json({ error: validacao.avisos.join(" ") }, { status: 422 });
   }
 
   const resultado = simular(montarProjetoInput(dados, taxaPadraoGlobal, parametrosFiscais));
