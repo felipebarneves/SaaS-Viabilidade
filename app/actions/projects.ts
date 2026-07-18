@@ -28,11 +28,16 @@ export async function criarProjeto(formData: FormData) {
   const percentualPresuncaoRaw = formData.get("percentual_presuncao");
   const aliquotaEfetivaRaw = formData.get("aliquota_efetiva_ir_csll");
 
-  if (regime === "LUCRO_PRESUMIDO" && !percentualPresuncaoRaw) {
-    throw new Error("Regime Lucro Presumido exige o Percentual de Presunção preenchido.");
-  }
-  if (regime === "SIMPLIFICADO_ALIQUOTA_UNICA" && !aliquotaEfetivaRaw) {
-    throw new Error("Regime Simplificado (Alíquota Única) exige a Alíquota Efetiva IR+CSLL preenchida.");
+  // RF-CORE-001: erro de preenchimento volta ao formulário como aviso claro —
+  // throw numa Server Action em produção viraria a tela genérica de erro do Next.js.
+  const erroValidacao =
+    regime === "LUCRO_PRESUMIDO" && !percentualPresuncaoRaw
+      ? "Regime Lucro Presumido exige o Percentual de Presunção preenchido."
+      : regime === "SIMPLIFICADO_ALIQUOTA_UNICA" && !aliquotaEfetivaRaw
+        ? "Regime Simplificado (Alíquota Única) exige a Alíquota Efetiva IR+CSLL preenchida."
+        : null;
+  if (erroValidacao) {
+    redirect(`/projetos/novo?workspace=${workspaceId}&erro=${encodeURIComponent(erroValidacao)}`);
   }
 
   const { data: projeto, error } = await supabase

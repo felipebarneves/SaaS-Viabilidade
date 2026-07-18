@@ -5,9 +5,10 @@ import { criarProjeto } from "@/app/actions/projects";
 export default async function NovoProjetoPage({
   searchParams,
 }: {
-  searchParams: Promise<{ workspace?: string }>;
+  searchParams: Promise<{ workspace?: string; erro?: string }>;
 }) {
   let { workspace } = await searchParams;
+  const { erro } = await searchParams;
   if (!workspace) {
     // Sem ?workspace= na URL (acesso direto/bookmark): usa o primeiro workspace do usuário,
     // como a lista de projetos já faz; sem nenhum, volta para o bootstrap de workspace.
@@ -26,6 +27,7 @@ export default async function NovoProjetoPage({
   return (
     <div className="card" style={{ maxWidth: 640 }}>
       <h1 style={{ fontSize: 18, marginTop: 0 }}>Novo Projeto</h1>
+      {erro && <p className="negative">{erro}</p>}
       <form action={criarProjeto}>
         <input type="hidden" name="workspace_id" value={workspace} />
 
