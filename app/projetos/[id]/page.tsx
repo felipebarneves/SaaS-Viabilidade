@@ -61,6 +61,7 @@ export default async function ProjetoDetalhePage({ params }: { params: Promise<{
         </div>
         <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
           <a href={`/projetos/${id}/export.xlsx`}>Exportar .xlsx ↓</a>
+          <a href={`/projetos/${id}/export.pdf`}>Exportar .pdf ↓</a>
           <Link href={`/projetos/${id}/versoes`}>Comparar versões →</Link>
         </div>
       </div>
