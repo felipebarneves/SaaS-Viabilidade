@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 import { criarProjeto } from "@/app/actions/projects";
 
 export default async function NovoProjetoPage({
@@ -5,9 +7,20 @@ export default async function NovoProjetoPage({
 }: {
   searchParams: Promise<{ workspace?: string }>;
 }) {
-  const { workspace } = await searchParams;
+  let { workspace } = await searchParams;
   if (!workspace) {
-    return <p className="negative">Workspace não informado.</p>;
+    // Sem ?workspace= na URL (acesso direto/bookmark): usa o primeiro workspace do usuário,
+    // como a lista de projetos já faz; sem nenhum, volta para o bootstrap de workspace.
+    const supabase = await createClient();
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) redirect("/login");
+    const { data: membership } = await supabase
+      .from("workspace_members")
+      .select("workspace_id")
+      .limit(1)
+      .maybeSingle();
+    if (!membership) redirect("/projetos");
+    workspace = membership.workspace_id as string;
   }
 
   return (

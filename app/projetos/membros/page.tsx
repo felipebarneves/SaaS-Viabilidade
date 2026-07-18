@@ -15,11 +15,20 @@ export default async function MembrosPage({
 }: {
   searchParams: Promise<{ workspace?: string }>;
 }) {
-  const { workspace: workspaceId } = await searchParams;
+  let { workspace: workspaceId } = await searchParams;
   const supabase = await createClient();
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) redirect("/login");
-  if (!workspaceId) return <p className="negative">Workspace não informado.</p>;
+  if (!workspaceId) {
+    // Sem ?workspace= na URL: usa o primeiro workspace do usuário (mesmo fallback da lista de projetos).
+    const { data: membership } = await supabase
+      .from("workspace_members")
+      .select("workspace_id")
+      .limit(1)
+      .maybeSingle();
+    if (!membership) redirect("/projetos");
+    workspaceId = membership.workspace_id as string;
+  }
 
   const role = await obterRoleNoWorkspace(supabase, workspaceId);
   const ehAdmin = podeGerirMembrosEFaturamento(role);
