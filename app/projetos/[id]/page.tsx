@@ -59,7 +59,10 @@ export default async function ProjetoDetalhePage({ params }: { params: Promise<{
             {dados.project.duracao_meses} meses · {dados.project.regime_tributario}
           </span>
         </div>
-        <Link href={`/projetos/${id}/versoes`}>Comparar versões →</Link>
+        <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+          <a href={`/projetos/${id}/export.xlsx`}>Exportar .xlsx ↓</a>
+          <Link href={`/projetos/${id}/versoes`}>Comparar versões →</Link>
+        </div>
       </div>
 
       {avisos.map((aviso) => (
