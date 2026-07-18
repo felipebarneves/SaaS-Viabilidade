@@ -30,3 +30,8 @@ export function podeEscrever(role: WorkspaceRole | null): boolean {
 export function podeGerirMembrosEFaturamento(role: WorkspaceRole | null): boolean {
   return role === "OWNER_ADMIN";
 }
+
+/** 5.2: exclusão permanente de projetos é permissão exclusiva de Owner/Admin. */
+export function podeExcluirProjeto(role: WorkspaceRole | null): boolean {
+  return role === "OWNER_ADMIN";
+}

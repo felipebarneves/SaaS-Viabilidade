@@ -6,7 +6,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { obterRoleNoWorkspace, podeEscrever } from "@/lib/auth/rbac";
+import { obterRoleNoWorkspace, podeEscrever, podeExcluirProjeto } from "@/lib/auth/rbac";
 import type { RegimeTributario, ClassificacaoCusto, TipoItem } from "@/core/engine";
 
 async function exigirPermissaoDeEscrita(workspaceId: string) {
@@ -64,6 +64,26 @@ export async function criarProjeto(formData: FormData) {
 
   revalidatePath("/projetos");
   redirect(`/projetos/${projeto.id}`);
+}
+
+/** 5.2: exclusão permanente — restrita a Owner/Admin, checada aqui e reforçada pela RLS
+ * (projects_delete_admin_only, migration 0012) como segunda camada. Cascata via ON DELETE
+ * CASCADE remove todo o histórico de versões e lançamentos do projeto (RF-CORE-003). */
+export async function excluirProjeto(formData: FormData) {
+  const projectId = String(formData.get("project_id"));
+  const workspaceId = String(formData.get("workspace_id"));
+
+  const supabase = await createClient();
+  const role = await obterRoleNoWorkspace(supabase, workspaceId);
+  if (!podeExcluirProjeto(role)) {
+    throw new Error("Apenas Owner/Admin pode excluir projetos permanentemente.");
+  }
+
+  const { error } = await supabase.from("projects").delete().eq("id", projectId);
+  if (error) throw error;
+
+  revalidatePath("/projetos");
+  redirect(`/projetos?workspace=${workspaceId}`);
 }
 
 export async function adicionarItemCronograma(formData: FormData) {

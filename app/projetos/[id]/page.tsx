@@ -21,8 +21,10 @@ import {
 } from "@/app/actions/projects";
 import { salvarVersao } from "@/app/actions/versions";
 import { DashboardMensal } from "@/app/projetos/[id]/dashboard-mensal";
+import { ExcluirProjetoButton } from "@/app/projetos/[id]/excluir-projeto-button";
 import { formatarMoeda, formatarPercentual } from "@/lib/format";
 import { validarProjetoParaSimulacao } from "@/lib/projects/validacao";
+import { obterRoleNoWorkspace, podeExcluirProjeto } from "@/lib/auth/rbac";
 
 export default async function ProjetoDetalhePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -32,6 +34,7 @@ export default async function ProjetoDetalhePage({ params }: { params: Promise<{
   if (!dados) notFound();
 
   const workspaceId = dados.project.workspace_id;
+  const role = await obterRoleNoWorkspace(supabase, workspaceId);
   const parametros = await carregarParametros(supabase, workspaceId);
   const parametrosFiscais = resolverParametrosFiscais(parametros);
   const taxaPadraoGlobal = resolverTaxaDescontoPadraoGlobal(parametros);
@@ -61,6 +64,9 @@ export default async function ProjetoDetalhePage({ params }: { params: Promise<{
           <a href={`/projetos/${id}/export.xlsx`}>Exportar .xlsx ↓</a>
           <a href={`/projetos/${id}/export.pdf`}>Exportar .pdf ↓</a>
           <Link href={`/projetos/${id}/versoes`}>Comparar versões →</Link>
+          {podeExcluirProjeto(role) && (
+            <ExcluirProjetoButton projectId={id} workspaceId={workspaceId} nome={dados.project.nome} />
+          )}
         </div>
       </div>
 

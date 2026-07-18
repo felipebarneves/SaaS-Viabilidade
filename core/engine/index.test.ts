@@ -254,3 +254,43 @@ describe("simular() — Breakeven Operacional", () => {
     expect(resultado.breakeven.operacionalReceita).toBeCloseTo(5000, 6);
   });
 });
+
+describe("simular() — RNF-CORE-001 (Performance): recálculo em menos de 150ms", () => {
+  it("projeto de 60 meses com 40 itens de cronograma, reajuste e capex simula em <150ms", () => {
+    const duracaoMeses = 60;
+    const itensCronograma: ProjetoInput["itensCronograma"] = Array.from({ length: 40 }, (_, i) => ({
+      id: `item-${i}`,
+      tipo: i % 3 === 0 ? "RECEITA" : "CUSTO",
+      classificacaoCusto: i % 3 === 0 ? undefined : i % 2 === 0 ? "FIXO" : "VARIAVEL",
+      dataInicio: "2026-01-01",
+      duracaoMeses,
+      quantidade: 1,
+      valorUnitario: 1000 + i,
+      aliquotaImpostos: i % 3 === 0 ? 0.06 : 0,
+    }));
+
+    const projeto = baseProjeto({
+      duracaoMeses,
+      itensCronograma,
+      capex: Array.from({ length: 5 }, (_, i) => ({ id: `capex-${i}`, valor: 10000, mesCompetencia: `2026-0${i + 1}` })),
+      reajusteContratual: {
+        aplicaReajuste: true,
+        indice: "IPCA",
+        periodicidade: "ANUAL",
+        mesBase: 1,
+        competencias: [
+          { mesCompetencia: "2027-01", percentualIndice: 0.05 },
+          { mesCompetencia: "2028-01", percentualIndice: 0.04 },
+          { mesCompetencia: "2029-01", percentualIndice: 0.045 },
+          { mesCompetencia: "2030-01", percentualIndice: 0.05 },
+        ],
+      },
+    });
+
+    const inicio = performance.now();
+    simular(projeto);
+    const duracaoMs = performance.now() - inicio;
+
+    expect(duracaoMs).toBeLessThan(150);
+  });
+});

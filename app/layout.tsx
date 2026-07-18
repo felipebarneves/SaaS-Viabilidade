@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
+import { Space_Grotesk, DM_Sans, JetBrains_Mono } from "next/font/google";
 import { ThemeScript } from "@/app/theme-script";
 import { ThemeToggle } from "@/app/theme-toggle";
 import "./globals.css";
+
+// Tipografia da marca Neves Soluções (MY_BUSINESS/brand/brand-identity.md, Seção 4).
+const fontDisplay = Space_Grotesk({ subsets: ["latin"], variable: "--font-display", weight: ["600", "700"] });
+const fontBody = DM_Sans({ subsets: ["latin"], variable: "--font-body" });
+const fontMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
   title: "Prumo Viabilidade",
@@ -10,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" className={`${fontDisplay.variable} ${fontBody.variable} ${fontMono.variable}`}>
       <head>
         <ThemeScript />
       </head>

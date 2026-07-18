@@ -1,5 +1,8 @@
 /* RNF-CORE-002: interface executiva sóbria, modo claro/escuro persistente por preferência do usuário.
-   Paleta placeholder — substituir por MY_BUSINESS/brand/brand-identity.md quando existir (Seção 4 do PRD). */
+   Paleta institucional Neves Soluções (MY_BUSINESS/brand/brand-identity.md, Seção 4 do PRD) — marca é
+   dark-first, dourado como único acento. O modo claro abaixo é um fallback neutro para quem prefere
+   tema claro (exigência funcional do RNF-CORE-002); não é "inverter a marca", é uma paleta neutra à
+   parte que ainda usa o dourado só como acento, nunca como fundo — respeita a regra de uso da marca. */
 
 :root {
   --bg: #f7f8fa;
@@ -7,33 +10,45 @@
   --border: #dde1e6;
   --text: #16191d;
   --text-muted: #5b6370;
-  --accent: #1f4b8f;
+  --accent: #c8883a;
   --accent-contrast: #ffffff;
   --positive: #1a7f4b;
   --negative: #b3261e;
+  --radius: 8px;
+  --radius-lg: 14px;
+  --tr: 0.28s ease;
+  /* --font-display/--font-body/--font-mono vêm do next/font/google em app/layout.tsx (classe no <html>). */
 }
 
 :root[data-theme="dark"] {
-  --bg: #101317;
-  --surface: #171b21;
-  --border: #2a2f37;
-  --text: #edf0f3;
-  --text-muted: #9aa3af;
-  --accent: #6f9ceb;
-  --accent-contrast: #0a0f16;
+  --bg: #07111f;
+  --surface: #0b1929;
+  --border: rgba(168, 180, 192, 0.09);
+  --border-accent: rgba(200, 136, 58, 0.22);
+  --glow-accent: rgba(200, 136, 58, 0.07);
+  --text: #edf1f5;
+  --text-muted: #a8b4c0;
+  --accent: #c8883a;
+  --accent-2: #e8a855;
+  --accent-grad: linear-gradient(135deg, #c8883a 0%, #e8a855 100%);
+  --accent-contrast: #07111f;
   --positive: #4fd18b;
   --negative: #f2867d;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #101317;
-    --surface: #171b21;
-    --border: #2a2f37;
-    --text: #edf0f3;
-    --text-muted: #9aa3af;
-    --accent: #6f9ceb;
-    --accent-contrast: #0a0f16;
+    --bg: #07111f;
+    --surface: #0b1929;
+    --border: rgba(168, 180, 192, 0.09);
+    --border-accent: rgba(200, 136, 58, 0.22);
+    --glow-accent: rgba(200, 136, 58, 0.07);
+    --text: #edf1f5;
+    --text-muted: #a8b4c0;
+    --accent: #c8883a;
+    --accent-2: #e8a855;
+    --accent-grad: linear-gradient(135deg, #c8883a 0%, #e8a855 100%);
+    --accent-contrast: #07111f;
     --positive: #4fd18b;
     --negative: #f2867d;
   }
@@ -47,8 +62,18 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-body);
   font-size: 14px;
+  transition: background var(--tr), color var(--tr);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.015em;
 }
 
 a {
@@ -92,31 +117,51 @@ td:first-child {
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   padding: 1.25rem;
   margin-bottom: 1.25rem;
+  transition: border-color var(--tr);
+}
+
+.card:hover {
+  border-color: var(--border-accent, var(--border));
 }
 
 .table-scroll {
   overflow-x: auto;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
 }
 
 .btn {
-  background: var(--accent);
+  background: var(--accent-grad, var(--accent));
   color: var(--accent-contrast);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius);
   padding: 0.5rem 1rem;
   font-weight: 600;
   cursor: pointer;
+  transition: filter var(--tr), transform var(--tr);
+}
+
+.btn:hover {
+  filter: brightness(1.06);
 }
 
 .btn-secondary {
   background: transparent;
   color: var(--text);
   border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: color var(--tr), border-color var(--tr), background var(--tr);
+}
+
+.btn-secondary:hover {
+  color: var(--accent);
+  border-color: var(--border-accent, var(--accent));
+  background: var(--glow-accent, transparent);
 }
 
 input,
@@ -124,13 +169,17 @@ select {
   background: var(--surface);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius);
   padding: 0.4rem 0.6rem;
+  font-family: var(--font-body);
 }
 
 label {
   display: block;
-  font-size: 12px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 10px;
   color: var(--text-muted);
   margin-bottom: 0.25rem;
 }
